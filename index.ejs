@@ -1,0 +1,494 @@
+
+<html>
+    <head>
+      <link rel="stylesheet" type="text/css" href="/styles.css" />
+      <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@latest/dist/chartjs-plugin-streaming.min.js"></script> -->
+      <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+      <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    </head>
+    <body>
+      <header class="site-header">
+          <img src="/file/logo.png" width=50 class="h_logo"/>
+          <a href="/" class="h_title"><%- title %></a>
+          <span class="h_desc"><%- description %></span>
+      </header>
+      <main>
+        <div class="service-check">
+          <h1>Service List</h1>
+          <table class="services-table">
+            <thead> <tr><th>name</th><th>IP</th><th>alive</th><th>time</th><th>packetLoss</th></tr></thead>
+              <tbody id="services">
+                <% services.forEach((s) => { %>
+                  <tr><td>s.name</td><td><%- s.ip %></td><td>loading...</td><td></td><td></td></tr>
+                <% }) %>
+              </tbody>
+          </table>
+        </div>
+        <div class="service-check">
+          <h1>Health check</h1>
+          <div class="chart-container">
+            <div class="chart-wrapper chart-cpu-speed"><h2>CPU 周波数[GHz]</h2><p id="cpu-speed-detail"></p><canvas id="chart-cpu-speed" ></canvas></div>
+            <div class="chart-wrapper chart-cpu-temp"><h2>CPU 温度[℃]</h2><p id="cpu-temp-detail"></p><canvas id="chart-cpu-temp" ></canvas></div>
+            <div class="chart-wrapper chart-cpu-rate"><h2>CPU 使用率[%]</h2><p id="cpu-rate-detail"></p><canvas id="chart-cpu-rate" ></canvas></div>
+            <div class="chart-wrapper chart-memory"><h2>メモリー[GB]</h2><p id="mem-detail"></p><canvas id="chart-memory" ></canvas></div>
+            <div class="chart-wrapper chart-heap "><h2>Heap</h2><p id="heap-detail"></p><canvas id="chart-heap" ></canvas></div>
+            <div class="chart-wrapper chart-access"><h2>レスポンス[ms]</h2><p id="res-detail"></p><canvas id="chart-access" ></canvas></div>
+            <div class="chart-wrapper chart-disk "><h2>Disk</h2><p id="disk-detail"></p><canvas id="chart-disk" ></canvas></div>
+            <div class="chart-wrapper chart-table"><h2>Battery</h2><p id="battery-detail"></p><canvas id="chart-battery" ></canvas></div>
+          </div>
+        </div>
+
+        <% if(enable_users){ %>
+          <div class="service-check">
+            <h1>Logined Users</h1>
+            <table class="services-table">
+              <thead> <tr><th>username</th><th>terminal</th><th>login time</th><th>command</th></tr></thead>
+                <tbody id="users">
+                  <tr><td colspan="6">Now loading.......</td></tr>
+                </tbody>
+            </table>
+          </div>
+        <% } %>
+
+        <% if(enable_docker){ %>
+          <div class="service-check">
+            <h1>Docker Containers</h1>
+            <table class="services-table">
+              <thead> <tr><th>name</th><th>image</th><th>status</th><th>create</th><th>started</th><th>restartCount</th><th>platform</th><th>command</th></tr></thead>
+                <tbody id="containers">
+                  <tr><td colspan="7">Now loading.......</td></tr>
+                </tbody>
+            </table>
+          </div>
+        <% } %>
+
+        <% if(enable_procs){ %>
+          <div class="service-check">
+            <h1>Processes</h1>
+            <div id="processes-detail" class="service-detail"></div>
+            <table class="services-table">
+              <thead> <tr><th>PID</th><th>name</th><th>status</th><th>user</th><th>startedAt</th><th>CPU</th><th>Mem</th><th>path</th></tr></thead>
+                <tbody id="processes">
+                  <tr><td colspan="6">Now loading.......</td></tr>
+                </tbody>
+            </table>
+          </div>
+        <% } %>
+      </main>
+    </body>
+  </html>
+  <script>
+  const ctx_cpu_speed = document.getElementById('chart-cpu-speed').getContext('2d');
+  const ctx_cpu_temp  = document.getElementById('chart-cpu-temp').getContext('2d');
+  const ctx_cpu_rate  = document.getElementById('chart-cpu-rate').getContext('2d');
+  const ctx_memory    = document.getElementById('chart-memory').getContext('2d');
+  const ctx_heap      = document.getElementById('chart-heap').getContext('2d');
+  const ctx_disk      = document.getElementById('chart-disk').getContext('2d');
+  const ctx_access    = document.getElementById('chart-access').getContext('2d');
+  const ctx_battery    = document.getElementById('chart-battery').getContext('2d');
+  
+  const COLORS_TRANSPARENT = ["#C2185855", "#60C68955", "#272A8055", "#9C27B055", "#57ACDC55", "#27688055", "#4A352255", "#D4D2B355", "9D971A55", "#4CDA7B55"]
+  const COLORS = ["#C21858", "#60C689", "#272A80", "#9C27B0", "#57ACDC", "#276880", "#4A3522", "#D4D2B3", "9D971A", "#4CDA7B"]
+  const data = {
+    cpu_speed : [],
+    cpu_temp : [],
+    cpu_rate : [],
+    memory : {
+      total : [],
+      used : [],
+      active : []
+    },
+    heap : {
+      total : [],
+      used  : [],
+      malloc : [],
+    },
+    access : 0,
+    disk : [],
+    battery : []
+  }
+  
+  const getp = async()=> {
+    const start_time = Date.now()
+    await fetch("/");
+    const end_time = Date.now()
+    data.access = end_time - start_time;
+  
+    const response = await fetch("/p", {
+            method:"POST", headers: {'Content-Type': 'application/json'},
+            body:JSON.stringify({query:"getperformance"})
+          })
+    if(!response.ok){return {}}
+    const j = await response.json()
+    return j
+  }
+  
+  (async() => {
+  
+  const r = await getp();
+  console.log(r);
+  console.log(r.cpu.speed)
+  let cpu_speed_num = r.cpu.speed.length;
+  let cpu_temp_num = r.cpu.temp.length;
+  let cpu_rate_num = r.cpu.load.cpus.length;
+  let disk_num = r.disk.length;
+  
+  for(let i=0; i<cpu_speed_num; i++){data.cpu_speed.push([])}
+  for(let i=0; i<cpu_temp_num; i++){data.cpu_temp.push([])}
+  for(let i=0; i<cpu_rate_num; i++){data.cpu_rate.push([])}
+  
+  let chart_cpu_speed = new Chart(ctx_cpu_speed, {
+      type: 'line',
+      data: {
+          labels: [],
+          datasets: [...Array(cpu_speed_num).keys()].map(i => {return {
+              label:`Core-${i}`,
+              data: [],
+              fill: false,
+              borderColor: COLORS[i % 10],
+              tension: 0.1
+          }})
+      },
+      options: {scales: {y: {beginAtZero: true}}}
+  });
+  
+  let chart_cpu_temp = new Chart(ctx_cpu_temp, {
+      type: 'line',
+      data: {
+          labels: [],
+          datasets: [...Array(cpu_temp_num).keys()].map(i => {return {
+              label:`Core-${i}`,
+              data: [],
+              fill: true,
+              borderColor: COLORS[i % 10+1],
+              backgroundColor:COLORS_TRANSPARENT[i % 10+1],
+              tension: 0.1
+          }})
+      },
+      options: {scales: {y: {beginAtZero: true}}}
+  });
+  
+  let chart_cpu_load = new Chart(ctx_cpu_rate, {
+      type: 'line',
+      data: {
+          labels: [],
+          datasets: [...Array(cpu_rate_num).keys()].map(i => {
+            // if(i < cpu_rate_num){
+              return {
+                label:`All-${i}`,
+                data: [],
+                fill: true,
+                borderColor: COLORS[i % 10+2],
+                backgroundColor:COLORS_TRANSPARENT[i % 10+2],
+                tension: 0.1
+              }
+            // }else{
+            //   return {
+            //     label:`System-${i-cpu_rate_num}`,
+            //     data: [],
+            //     fill: false,
+            //     borderColor: COLORS[i % 10+2],
+            //     tension: 0.1
+            //   }
+            // }
+        })
+      },
+      options: {scales: {y: {beginAtZero: true}}}
+  });
+  
+  let chart_memory = new Chart(ctx_memory, {
+      type: 'line',
+      data: {
+          labels: [],
+          datasets: [
+              {
+                label:`Buffer`,
+                data: [],
+                fill: true,
+                backgroundColor:COLORS[0],
+                tension: 0.1
+              },
+              {
+                label:`Available`,
+                data: [],
+                fill: true,
+                backgroundColor:COLORS[1],
+                tension: 0.1
+              },
+              {
+                label:`Used`,
+                data: [],
+                fill: true,
+                backgroundColor:COLORS[2],
+                tension: 0.1
+              },
+              {
+                label:`All`,
+                data: [],
+                fill: true,
+                backgroundColor:COLORS[3],
+                tension: 0.1
+              }
+          ],
+      },
+      options: {scales: {y: {beginAtZero: true}}}
+  });
+  
+  let chart_heap = new Chart(ctx_heap, {
+      type: 'line',
+      data: {
+          labels: [],
+          datasets: [
+              {
+                label:`Used`,
+                data: [],
+                fill: true,
+                borderColor:COLORS[2],
+                backgroundColor:COLORS_TRANSPARENT[2],
+                tension: 0.1
+              },
+              {
+                label:`Physical`,
+                data: [],
+                fill: true,
+                borderColor:COLORS[1],
+                backgroundColor:COLORS_TRANSPARENT[1],
+                tension: 0.1
+              },
+              {
+                label:`Total`,
+                data: [],
+                fill: true,
+                borderColor:COLORS[0],
+                backgroundColor:COLORS_TRANSPARENT[0],
+                tension: 0.1
+              },
+          ],
+      },
+      options: {scales: {y: {beginAtZero: true}}}
+  });
+  
+  let chart_disk = new Chart(ctx_disk, {
+      type: 'bar',
+      data: {
+          labels: [],
+          datasets: [
+              {
+                label:`Used`,
+                data: [],
+                backgroundColor:[...Array(9).keys()].map(i=>COLORS[i%10]),
+              },
+              {
+                label:`Total`,
+                data: [],
+                backgroundColor:[...Array(9).keys()].map(i=>COLORS[i%10+1])
+              },
+              {
+                label:`Available`,
+                data: [],
+                backgroundColor: [...Array(9).keys()].map(i=>COLORS[i%10+2])
+              },
+          ],
+      },
+      options: {scales: {
+        x: {stacked: true},
+        y: {stacked: true, beginAtZero: true}
+      }}
+  });
+  
+  let chart_access = new Chart(ctx_access, {
+      type: 'line',
+      data: {
+          labels: [],
+          datasets: [{
+            label:`Access[ms]`,
+            data: [],
+            fill: true,
+            backgroundColor:COLORS[0],
+            tension: 0.1
+          }],
+      },
+      options: {scales: {y: {beginAtZero: true}}}
+  });
+  
+  let chart_battery = new Chart(ctx_battery, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label:`Designed`,
+          data: [],
+          backgroundColor:[...Array(9).keys()].map(i=>COLORS[i%10]),
+        },
+        {
+          label:`Max`,
+          data: [],
+          backgroundColor:[...Array(9).keys()].map(i=>COLORS[i%10+1])
+        },
+        {
+          label:`Charged`,
+          data: [],
+          backgroundColor: [...Array(9).keys()].map(i=>COLORS[i%10+2])
+        },
+      ]
+    },
+    
+    options: {scales: {
+        x: {stacked: true},
+        y: {stacked: true, beginAtZero: true}
+      }}
+  });
+  
+  const update = async()=> {
+    const r = await  getp()
+    if(r === {}){return;}
+  
+    const now = new Date();
+    const now_string = `${now.getMinutes()}:${now.getSeconds()}`
+    
+    const cpu_speed = r.cpu.speed;
+    const cpu_temp = r.cpu.temp;
+    const cpu_rate = r.cpu.load.cpus;
+    const memory = r.memory;
+    const disk = r.disk;
+    const heap = r.heap;
+  
+    for(let i=0; i<cpu_speed.length; i++){
+      chart_cpu_speed.data.datasets[i].data.push(cpu_speed[i]);
+    }
+    for(let i=0; i<cpu_temp.length; i++){
+      chart_cpu_temp.data.datasets[i].data.push(cpu_temp[i]);
+    }
+    for(let i=0; i<cpu_rate.length; i++){
+      chart_cpu_load.data.datasets[i].data.push(cpu_rate[i]["load"] );
+    }
+  
+    chart_disk.data.labels = disk.map(i=>i["fs"])
+    chart_disk.data.datasets[0].data = disk.map(i=>i["size"]/1024/1024)
+    chart_disk.data.datasets[1].data = disk.map(i=>i["used"]/1024/1024)
+    chart_disk.data.datasets[2].data = disk.map(i=>i["available"]/1024/1024)
+  
+    chart_memory.data.datasets[3].data.push(memory["total"]/1024/1024);
+    chart_memory.data.datasets[2].data.push(memory["used"]/1024/1024);
+    chart_memory.data.datasets[1].data.push(memory["active"]/1024/1024);
+    chart_memory.data.datasets[0].data.push(memory["buffers"]/1024/1024);
+    
+    chart_heap.data.datasets[0].data.push(heap["total_heap_size"]/1024/1024);
+    chart_heap.data.datasets[1].data.push(heap["total_physical_size"]/1024/1024);
+    chart_heap.data.datasets[2].data.push(heap["used_heap_size"]/1024/1024);
+    
+    chart_access.data.datasets[0].data.push(data.access);
+
+    chart_battery.data.labels =["battery"];
+    chart_battery.data.datasets[0].data = [r.battery.designedCapacity];
+    chart_battery.data.datasets[1].data = [r.battery.maxCapacity];
+    chart_battery.data.datasets[2].data = [r.battery.currentCapacity];
+  
+    chart_cpu_speed.data.labels.push(now_string);
+    chart_cpu_temp.data.labels.push(now_string);
+    chart_cpu_load.data.labels.push(now_string);
+    chart_memory.data.labels.push(now_string);
+    chart_access.data.labels.push(now_string);
+    chart_heap.data.labels.push(now_string);
+  
+    chart_cpu_speed.update('quiet');
+    chart_cpu_temp.update('quiet');
+    chart_cpu_load.update('quiet');
+    chart_memory.update('quiet');
+    chart_heap.update('quiet');
+    chart_disk.update('quiet');
+    chart_access.update('quiet');
+    chart_battery.update('quiet');
+
+    let speed_avg = 0;for(let i=0; i<cpu_speed.length; i++){ speed_avg += cpu_speed[i];} speed_avg /= cpu_speed.length;
+    let temp_avg = 0;for(let i=0; i<cpu_temp.length; i++){ temp_avg += cpu_temp[i];} temp_avg /= cpu_temp.length;
+    let rate_avg = 0;for(let i=0; i<cpu_rate.length; i++){ rate_avg += cpu_rate[i].load;} rate_avg /= cpu_rate.length;
+
+    document.getElementById("cpu-speed-detail").innerText = `avg ${Math.round(speed_avg*10)/10}GHz`;
+    document.getElementById("cpu-temp-detail").innerText = `avg ${Math.round(temp_avg)} ℃`;
+    document.getElementById("cpu-rate-detail").innerText = `avg ${Math.round(rate_avg)} %`;
+    document.getElementById("mem-detail").innerText = `ALL=${Math.round(memory.total/1024/1024/10) / 100 }GB USED=${Math.round(memory.used *100 / memory.total)}%`;
+    document.getElementById("heap-detail").innerText = `ALL=${Math.round(heap.total_heap_size/1024/10) / 100}GB USED=${Math.round(heap.used_heap_size *100 / heap.total_heap_size)}%`;
+    document.getElementById("res-detail").innerText = `${data.access} ms`;
+
+    let disk_all = 0;for(let i=0; i<disk.length; i++){ disk_all += disk[i].size;} disk_all /= disk.length*1000*1000*10;
+    let disk_used = 0;for(let i=0; i<disk.length; i++){ disk_used += disk[i].used;} disk_used /= disk.length*1000*1000*10;
+    document.getElementById("disk-detail").innerText = `ALL = ${Math.round(disk_all)/100} GB USED=${Math.round(disk_used *100 / disk_all)} %`;
+    document.getElementById("battery-detail").innerText = `${Math.round(r.battery.currentCapacity * 100 / r.battery.maxCapacity)} %`;
+
+    // service check
+    {
+      const tab = document.getElementById("services");
+      let txt = "";
+      r.services.forEach(s => {
+        const classname = s.res.alive ? "service-alive" : "service-dead";
+        const time = s.res.time === undefined ? "" : s.res.time;
+        const packetLoss= s.res.packetLoss === undefined ? "" : s.res.packetLoss;
+        const alive = s.res.alive ? 
+            "<i class='fas fa-check-circle' style='color:#3f3'></i> in Service" : 
+            "<i class='far fa-times-circle' style='color:#F66'></i> not Working";
+        txt += `<tr class="${classname}"><td>${s.name}</td><td>${s.res.host}</td><td>${alive}</td><td>${time}</td><td>${packetLoss}</td></tr>`
+      });
+      tab.innerHTML = txt;
+    }
+
+    <% if(enable_users){ %>
+    {
+      const tab = document.getElementById("users");
+      let txt = "";
+      r.users.forEach(s => {
+        txt += `<tr><td>${s.user}</td><td>${s.tty}</td><td>${s.date} ${s.time} ${s.ip}</td><td>${s.command}</td></tr>`
+      });
+      tab.innerHTML = txt;
+    }
+    <% } %>
+
+
+    <% if(enable_docker){ %>
+    {
+      const tab = document.getElementById("containers");
+      let txt = "";
+      r.dockers.forEach(s => {
+        const classname = s.state === "running" ? "service-alive" : "service-dead";
+        const status = s.state === "running" ?
+            "<i class='fas fa-check-circle' style='color:#3f3'></i> running" : 
+            "<i class='far fa-times-circle' style='color:#F66'></i> stopped";
+        txt += `<tr><td>${s.name}</td><td>${s.image}</td><td>${status}</td><td>${s.createdAt}</td><td>${s.startedAt}</td><td>${s.restartCount}</td><td>${s.platform}</td><td>${s.command}</td></tr>`
+      });
+      tab.innerHTML = txt;
+    }
+    <% } %>
+
+    <% if(enable_procs){ %>
+    {
+      const tab = document.getElementById("processes");
+      let txt = "";
+      const onlyRunning = true;
+      r.procs.list.forEach(s => {
+        if(!onlyRunning || s.state === "running"){
+            const classname = s.state === "running" ? "service-alive" : "service-dead";
+            let status;
+            switch(s.state){
+              case "running" : status = "<i class='fas fa-check-circle' style='color:#3f3'></i> running"; break;
+              case "sleeping" : status = "<i class='fas fa-times-circle' style='color:#3f3'></i> sleeping"; break;
+              case "unknown" : status = "<i class='fas fa-times-circle' style='color:#fff'></i> unknown"; break;
+            }
+            txt += `<tr><td>${s.pid}</td><td>${s.name}</td><td>${status}</td><td>${s.user}</td><td>${s.started}</td><td>${s.cpu}</td><td>${s.mem}</td><td>${s.path}</td></tr>`
+        }
+      });
+      tab.innerHTML = txt;
+
+      const div = document.getElementById("processes-detail");
+      div.innerHTML = `<p>all : ${r.procs.all}  |  blocked : ${r.procs.blocked}  |  running : ${r.procs.running}  |  sleeping: ${r.procs.sleeping}</p>` + 
+      `<p>displaying ${onlyRunning ? "running" : "all"} processes</p>`;
+    }
+    <% } %>
+  }
+
+  update();
+  setInterval(update, <%- dt %>);
+  
+  })()  
+  </script>
+  

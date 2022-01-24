@@ -1,0 +1,15 @@
+version: '3'                                                                                                                                                                                                                                
+services:
+  healthcheck:
+    image: 'node:16-alpine'
+    container_name: 'healthcheck' 
+    working_dir: /src
+    tty: true
+    restart: always
+    command: npm start
+    environment:
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/src:ro
