@@ -6,10 +6,12 @@ services:
     working_dir: /src
     tty: true
     restart: always
-    command: npm start
+    # command: npm start # こうすると、node index.jsを動かすユーザーがnodeになってしまい、Dockerの/var/run/docker.sockにアクセス権限がなくなってしまう
+    command: node index.js
     environment:
       PORT: "8000"
     ports:
       - "8000:8000"
     volumes:
       - ./:/src:ro
+      - /var/run/docker.sock:/var/run/docker.sock

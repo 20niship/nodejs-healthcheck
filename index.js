@@ -46,7 +46,7 @@ setInterval(async() =>  {
         battery: (await si.battery()),
         users  : (await si.users()),
         procs  : (await si.processes()),
-        dockers  : (await si.dockerContainers()),
+        dockers  : (await si.dockerContainers(true)),
         services : services
     }
 }, config.performance_check_cron);

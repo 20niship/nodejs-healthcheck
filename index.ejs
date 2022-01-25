@@ -15,6 +15,7 @@
       <main>
         <div class="service-check">
           <h1>Service List</h1>
+          <div class="table-wrap">
           <table class="services-table">
             <thead> <tr><th>name</th><th>IP</th><th>alive</th><th>time</th><th>packetLoss</th></tr></thead>
               <tbody id="services">
@@ -23,6 +24,7 @@
                 <% }) %>
               </tbody>
           </table>
+          </div>
         </div>
         <div class="service-check">
           <h1>Health check</h1>
@@ -41,24 +43,28 @@
         <% if(enable_users){ %>
           <div class="service-check">
             <h1>Logined Users</h1>
+            <div class="table-wrap">
             <table class="services-table">
               <thead> <tr><th>username</th><th>terminal</th><th>login time</th><th>command</th></tr></thead>
                 <tbody id="users">
                   <tr><td colspan="6">Now loading.......</td></tr>
                 </tbody>
             </table>
+            </div>
           </div>
         <% } %>
 
         <% if(enable_docker){ %>
           <div class="service-check">
             <h1>Docker Containers</h1>
+            <div class="table-wrap">
             <table class="services-table">
               <thead> <tr><th>name</th><th>image</th><th>status</th><th>create</th><th>started</th><th>restartCount</th><th>platform</th><th>command</th></tr></thead>
                 <tbody id="containers">
                   <tr><td colspan="7">Now loading.......</td></tr>
                 </tbody>
             </table>
+            </div>
           </div>
         <% } %>
 
@@ -66,12 +72,14 @@
           <div class="service-check">
             <h1>Processes</h1>
             <div id="processes-detail" class="service-detail"></div>
-            <table class="services-table">
-              <thead> <tr><th>PID</th><th>name</th><th>status</th><th>user</th><th>startedAt</th><th>CPU</th><th>Mem</th><th>path</th></tr></thead>
-                <tbody id="processes">
-                  <tr><td colspan="6">Now loading.......</td></tr>
-                </tbody>
-            </table>
+            <div class="table-wrap">
+              <table class="services-table">
+                <thead> <tr><th>PID</th><th>name</th><th>status</th><th>user</th><th>startedAt</th><th>CPU</th><th>Mem</th><th>path</th></tr></thead>
+                  <tbody id="processes">
+                    <tr><td colspan="6">Now loading.......</td></tr>
+                  </tbody>
+              </table>
+            </div>
           </div>
         <% } %>
       </main>

@@ -20,9 +20,9 @@ const config = {
     service_check_cron : 3000, // run service check each ?? ms
     performance_check_cron : 5000,
 
-    enable_docker : false, // show docker container status
+    enable_docker : true, // show docker container status
     enable_procs  : true, // show process status
-    enable_users  : false, // show logined user status
+    enable_users  : true, // show logined user status
 
     notify_slack :{
         storage_full : "",

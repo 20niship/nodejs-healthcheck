@@ -40,7 +40,6 @@ header {
   position: fixed;
   background-color: #555; 
   height:55px;
-  padding-top: 10px;
   padding-left: 20px;
   width:100%;
   top: 0;
@@ -74,6 +73,10 @@ h1 {
 }
 
 /* ---------------------------  Table  -------------------------*/
+.table-wrap {
+  overflow-x: scroll;
+}
+
 table,th{
   background-color: #000;
   border-collapse: collapse;
