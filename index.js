@@ -3,7 +3,7 @@ const v8 = require('v8');
 const si = require('systeminformation');
 const ping = require('ping');
 const config = require("./params.js");
-
+const fs = require("fs");
 const app = express();
 app.set("view engine", "ejs")
 app.use(express.static('static'));
@@ -71,27 +71,18 @@ app.get("/ssh_analisis", async(req, res) => {
   res.json(data);
 })
 
-app.get("/refresh_data", async(req, res)=> {
-  res.send("ok")
+app.get("/a", async(req, res) => {
   await logdb.create_table();
   // await logdb.clear_data();
-  const pages = [
-    // {name:"/var/log/auth.log", zipped:false },
-    // {name:"/var/log/auth.log.2", zipped:false },
-    // {name:"/var/log/auth.log.2.gz", zipped:true },
-    // {name:"/var/log/auth.log.3.gz", zipped:true },
-    {name:"./tmp/auth.log", zipped:false },
-    {name:"./tmp/auth.log.1", zipped:false },
-    {name:"./tmp/auth.log.2.gz", zipped:true },
-    {name:"./tmp/auth.log.3.gz", zipped:true },
-  ]
-  for await (f of pages){
-    await logdb.insert_syslog_data(f.name, f.zipped);
-    console.log(f.name);
+  const files = fs.readdirSync('/var/log').filter(word => word.match(/auth\.log.?/gm));
+  console.log(files);
+  for await (f of files){
+    await logdb.insert_syslog_data('/var/log/' + f, f.match(".gz"));
+    console.log(f, f.match(".gz"))
   }
   console.log("hoge")
-  await logdb.insert_nginx_data("./tmp/access.log", false);
-})
+  // await logdb.insert_nginx_data("./tmp/access.log", false);
+});
 
 app.use((req, res, next) => {
     res.status(404).send("<h1>404 Page Not Found</h1>");
@@ -101,3 +92,5 @@ console.log("Server start on port ", config.port)
 app.listen(config.port, () => {
     console.log('listening......');
 });
+
+
