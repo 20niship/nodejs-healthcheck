@@ -1,0 +1,321 @@
+<!DOCTYPE HTML>
+<html>
+<%- include('_header.ejs', {}); %>
+<div class="main-wrapper">
+<main class="grid-container center">
+  <section class="grid grid-1 access-sum">
+    <p><span id="day-access-success"></span>/<span id="day-access-all"></span> access today</p>
+    <p><span id="month-access-success"></span>/<span id="month-access-all"></span> access this month</p>
+    <p><span id="year-access-success"></span>/<span id="year-access-all"></span> access this year</p>
+    <style>
+    p span {
+      font-size:200%;
+      bold:true;
+    }
+    </style>
+  </section>
+
+  <section class="grid grid-2">
+    <h2>World Heatmap</h2>
+     <div id="map"></div>
+<style>
+#map{height:300px;}
+:root {
+    --map-tiles-filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+@media (prefers-color-scheme: dark) {
+    .map-tiles {
+        filter:var(--map-tiles-filter, none);
+	}
+}
+</style>
+<script>
+var map = L.map('map').fitWorld();
+L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    className: 'map-tiles'
+}).addTo(map);
+</script>
+</section>
+
+<section class="grid grid-3">
+<h1>Allowed Users</h1>
+<canvas id="chart-allowed-user"></canvas>
+</section>
+
+<section class="grid grid-4">
+<h1>Denied Users</h1>
+<canvas id="chart-denied-user"></canvas>
+</section>
+
+<section class="grid grid-4">
+<h1>Frequency</h1>
+<div class="freq-selection">
+  <input type="radio" name="freq-selection" id="freq-select1" value="hour" onclick="update_freq_chart_()" checked><label for="freq-select1">hour</label>
+ <input type="radio" name="freq-selection" id="freq-select2" value="day" onclick="update_freq_chart_()"><label for="freq-select2">day</label>
+ <input type="radio" name="freq-selection" id="freq-select3" value="month" onclick="update_freq_chart_()"><label for="freq-select3">month</label>
+ <input type="radio" name="freq-selection" id="freq-select4" value="year" onclick="update_freq_chart_()"><label for="freq-select4">year</label>
+</div>
+<canvas id="chart-freq"></canvas>
+</section>
+
+<section class="grid grid-5">
+<h1>Status</h1>
+<canvas id="chart-status"></canvas>
+</section>
+
+
+<section class="grid grid-6">
+<h1>history - success</h1>
+<table class="ssh-hist-table">
+  <thead></thead>
+  <tbody id="ssh_hist_tbody_success"></tbody>
+</table>
+<style>
+.grid-6{
+overflow-y: scroll;
+}
+</style>
+</section>
+
+<section class="grid grid-7">
+<h1>history - failed</h1>
+<table class="ssh-hist-table">
+  <thead></thead>
+  <tbody id="ssh_hist_tbody_failed"></tbody>
+</table>
+<style>
+.grid-7{
+overflow-y: scroll;
+}
+</style>
+</section>
+
+
+<section class="grid grid-5">
+<h1>Status</h1>
+<canvas id="chart-status"></canvas>
+</section>
+</main>
+  </div>
+</body>
+
+<style>
+</style>
+
+<script>
+let data_all = [];
+
+const get = async() => {
+  const res = await fetch("/ssh_analisis", {method:"GET", headers:{
+  'Accept': 'application/json',
+  'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+  }});
+  if(!res.ok) return;
+  data_all = await res.json();
+}
+
+const update_user_chart = async() => {
+  {
+    const users = data_all[2];
+    console.log(users);
+    const disp_n = 10; // 
+    const names = users.map(x=>x?.user);
+    const nums  = users.map(x=>x?.n);
+    let labels, data;
+    if(names.length > disp_n){
+      labels = names.slice(0,disp_n);
+      data = nums.slice(0,disp_n);
+      labels.push("Other");
+      let total =  nums.slice(disp_n).reduce((sum,e)=>sum+e, 0);
+      data.push(total);
+    }else{
+      labels = names;
+      data = nums;
+    }
+    const text = nums.reduce((s,e)=>s+e,0) + " access";
+    const ctx = document.getElementById("chart-denied-user");
+    const myDoughnutChart= new Chart(ctx, {type: 'doughnut', data: {labels, datasets: [{data, color:"#fff"}]},
+    options: {title: {display:false},legend:{position:"right", labels:{color:"#fff"}},
+        elements: {center: {text}},
+    plugins: {colorschemes: {scheme: 'brewer.DarkTwo3'}}}
+    });
+  }
+  {
+    const users = data_all[3];
+    console.log(users);
+    const disp_n = 10; // 
+    const names = users.map(x=>x?.user);
+    const nums  = users.map(x=>x?.n);
+    let labels, data;
+    if(names.length > disp_n){
+      labels = names.slice(0,disp_n);
+      data = nums.slice(0,disp_n);
+      labels.push("Other");
+      let total =  nums.slice(disp_n).reduce((sum,e)=>sum+e, 0);
+      data.push(total);
+    }else{
+      labels = names;
+      data = nums;
+    }
+    const text = nums.reduce((s,e)=>s+e,0) + " access";
+    const ctx = document.getElementById("chart-allowed-user");
+    const myDoughnutChart= new Chart(ctx, {type: 'doughnut', data: {labels, datasets: [{data, color:"#fff"}]},
+    options: {title: {display:false,text: 'Denied Users'},legend:{position:"right"},
+        elements: {center: {text}},
+    plugins: {colorschemes: {scheme: 'brewer.Paired12'}}}
+    });
+  }
+}
+
+const update_freq_chart_ = ()=> {
+    (async() => { await update_freq_chart(); })();
+}
+
+const update_freq_chart = async()=>{
+  const selection = document.querySelector('input[name="freq-selection"]:checked').value;
+  let freq;
+  switch(selection){
+    case "year": freq = data_all[4]; break;
+    case "month": freq = data_all[5]; break;
+    case "day": freq = data_all[6]; break;
+    default: freq = data_all[7]; break;
+  }
+  const labels = freq.map(x=>x?.l);
+  const data  = freq.map(x=>x?.n);
+  const ctx = document.getElementById("chart-freq");
+  const myDoughnutChart= new Chart(ctx, {type:'bar', data: {labels, datasets: [{data, color:"#fff"}]},
+  options: {title: {display:false, text:'Denied Users'},plugins: {colorschemes: {scheme:'brewer.Paired12'}}}
+  });
+} 
+
+const update_access_sum = async() => {
+  const elms = [
+    document.getElementById("day-access-success"),
+    document.getElementById("day-access-all"),
+    document.getElementById("month-access-success"),
+    document.getElementById("month-access-all"),
+    document.getElementById("year-access-success"),
+    document.getElementById("year-access-all"),
+  ];
+
+  elms[0].innerText = data_all[8][0]?.today_access; 
+  elms[1].innerText = data_all[8][0]?.today_access; 
+  elms[2].innerText = data_all[9][0]?.month_access; 
+  elms[3].innerText = data_all[9][0]?.month_access; 
+  elms[4].innerText = data_all[10][0]?.year_access; 
+  elms[5].innerText = data_all[10][0]?.year_access; 
+
+}
+
+
+const update_table = async()=> {
+  const elm = document.getElementById("ssh_hist_tbody_success"); 
+  const hist = data_all[13];
+  for(l of hist){
+      elm.innerHTML += `<tr><td>${l.time}</td><td>${l.ip}</td><td>${l.user}</td><td>${l.message}</td></tr>`;
+  }
+
+  const elm2 = document.getElementById("ssh_hist_tbody_failed"); 
+  const hist2 = data_all[14];
+  for(l of hist2){
+      elm2.innerHTML += `<tr><td>${l.time}</td><td>${l.ip}</td><td>${l.user}</td><td>${l.message}</td><td>${l.country}</td></tr>`;
+  }
+}
+
+const update_status_chart = async()=>{
+  const st = data_all[11];
+  const labels = [
+     "Disconnected from invalid user ",
+     "error: kex_exchange_identification",
+     "maximum authentication attempts exceeded for invalid user",
+     "Too many authentication failures",
+     "Disconnecting invalid user",
+     "nvalid user ",
+     "Unable to negotiate with ",
+     "session closed for user ",
+     "session opened for user ",
+     "Disconnected from user",
+     "not allowed because not listed in AllowUsers",
+     "Received disconnect from ",
+     "Connection closed by authenticating user",
+     "Connection closed by remote host",
+     "Connection closed by ",
+     "Connection reset by ",
+     "Disconnected from ",
+     "Accepted publickey for ",
+  ]
+  const data  = st.map(x=>x?.n);
+  const ctx = document.getElementById("chart-status");
+  const myDoughnutChart= new Chart(ctx, {type:'bar', data: {labels, datasets: [{data, color:"#fff"}]},
+    options: {title: {display:false},legend:{position:"bottom", labels:{color:"#fff"}},
+    plugins: {colorschemes: {scheme:'brewer.DarkTwo3'}}}
+  });
+} 
+
+
+const register_plugin =()=> {
+  Chart.pluginService.register({
+  beforeDraw: function (chart) {
+    if (chart.config.options.elements.center) {
+      //Get ctx from string
+      var ctx = chart.chart.ctx;
+
+      //Get options from the center object in options
+      var centerConfig = chart.config.options.elements.center;
+      var fontStyle = centerConfig.fontStyle || 'Arial';
+      var txt = centerConfig.text;
+      var color = "#fff"; //centerConfig.color || '#000';
+      var sidePadding = centerConfig.sidePadding || 20;
+      var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2)
+      //Start with a base font of 30px
+      ctx.font = "30px " + fontStyle;
+
+      //Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+      var stringWidth = ctx.measureText(txt).width;
+      var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+
+      // Find out how much the font can grow in width.
+      var widthRatio = elementWidth / stringWidth;
+      var newFontSize = Math.floor(30 * widthRatio);
+      var elementHeight = (chart.innerRadius * 2);
+
+      // Pick a new font size so it will not be larger than the height of label.
+      var fontSizeToUse = Math.min(newFontSize, elementHeight);
+
+      //Set font settings to draw it correctly.
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+      var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+      ctx.font = fontSizeToUse+"px " + fontStyle;
+      ctx.fillStyle = color;
+
+      //Draw text in center
+      ctx.fillText(txt, centerX, centerY);
+    }
+  }
+  });
+}
+
+const update = async() => {
+  await get();
+  // register text in chart
+  // https://github.com/chartjs/Chart.js/issues/78
+  register_plugin();
+
+  await update_user_chart();
+  await update_freq_chart();
+  await update_access_sum();
+  await update_table();
+  await update_status_chart();
+}
+
+window.onload = async() => {
+  await update();
+}
+
+
+</script>
+</html>
+

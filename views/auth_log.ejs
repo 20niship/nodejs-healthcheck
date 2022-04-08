@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<%- include('_header.ejs', {}); %>
+<div class="main-wrapper">
+    <table>
+      <thead>
+        <tr><th>priority</th><th>facility_code</th><th>severity</th><th>time</th><th>host</th><th>process</th><th>message</th><th>pid</th></tr>
+
+<% result.forEach(e => { %>
+<tr><td><%- e.priority %></td><td><%- e.facility_code %></td><td><%- e.severity %></td><td><%- e.time %></td><td><%- e.host %></td><td><%- e.proccess %></td><td><%- e.message %></td><td><%- e.pid %></td></tr>
+<% }) %>
+      </thead>
+    </table>
+</div>
+  </body>
+</html>
+
+

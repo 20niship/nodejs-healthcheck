@@ -1,4 +1,4 @@
-html{font-size:17px;overflow-x: hidden;}
+html{font-size:17px;overflow-x: hidden;background-color:#000;}
 
 @media (pointer:none), (pointer:coarse) {
 /* @media screen and (max-width: 600px) {  */
@@ -12,57 +12,224 @@ body {
   padding-left:3px;
   padding-right:10px;
 }
-*{font-size:1.0rem; font-family:'arial';}
+*{font-size:1.0rem; font-family:'arial';color:#fff;}
 a {color:rgb(219, 241, 250);;text-decoration: underline;}
 a:visited {color: rgb(159, 228, 255);}
 a:hover {font-weight: bold;}
-
+.title a{
+  color:#fff;
+  font-weight:bold;
+  font-size:2.0rem;
+  line-height:2.0rem;
+  text-align:center;
+}
 
 /*  ###################################
    #####       ヘッダー        #######
    ###################################*/
-
-.h_title {
-  font-weight: bold;
-  font-size: 1.8rem; 
-  text-decoration: none;
+html, body {
+    overflow-x: hidden;
+    height: 100%;
 }
-
-.h_title,
-.h_title:hover,
-.h_title:visited{
-  color:#fff;
+body {
+    padding: 0;
+    margin: 0;
 }
-
-.h_desc{ padding-left:0.7rem;font-size: 1.1rem;}
-
 header {
-  position: fixed;
-  background-color: #555; 
-  height:55px;
-  padding-left: 20px;
-  width:100%;
-  top: 0;
-  left: 50%;
-  z-index:5;
-  transform: translate(-50%, 0%);
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0;
-  padding-bottom:0; 
-  
-  padding-left: 1rem;
-  padding-right: 1rem;
-  margin-left: auto;
-  margin-right: auto;
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+    background-color: #FC466B;
+    position: fixed;
+    height: 60px!important;
+    overflow: hidden;
+    z-index: 10;
 }
 
-header{
-  height:50px;
-  z-index:2;
+
+.header-wrapper {  margin: 0 auto;  width: 100%;  max-width: 1000px;}
+header p {  margin: 22px 0 0;  font-size: 1.4rem;  font-weight: 700;}
+header p a{text-decoration: none;}
+
+
+main {
+    margin: 0 auto;
+    display: block;
+    height: 100%;
+    margin-top: 60px;
 }
+.mainInner{
+    display: table;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+}
+.mainInner div{
+    display:table-cell;
+    vertical-align: middle;
+    font-size: 3em;
+    font-weight: bold;
+    letter-spacing: 1.25px;
+}
+#sidebarMenu {
+    height: 100%;
+    position: fixed;
+    left: 0;
+    width: 200px;
+    margin-top: 60px;
+    transform: translateX(-200px);
+    transition: transform 250ms ease-in-out;
+    background: linear-gradient(180deg, #FC466B 0%, #3F5EFB 100%);
+}
+.sidebarMenuInner{
+    margin:0;
+    padding:0;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+.sidebarMenuInner li{
+    list-style: none;
+    color: #fff;
+    font-weight: bold;
+    padding: 20px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+.sidebarMenuInner li a{
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+}
+#openSidebarMenu:checked ~ #sidebarMenu {
+    transform: translateX(0);
+}
+
+#openSidebarMenu{
+    transition: all 0.2s;
+    box-sizing: border-box;
+    display: none;
+}
+.sidebarIconToggle {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    cursor: pointer;
+    position: absolute;
+    z-index: 99;
+    height: 100%;
+    width: 100%;
+    top: 22px;
+    left: 15px;
+    height: 22px;
+    width: 22px;
+}
+.spinner {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    background-color: #fff;
+}
+.horizontal {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    position: relative;
+    float: left;
+    margin-top: 3px;
+}
+.diagonal.part-1 {
+    position: relative;
+    transition: all 0.3s;
+    box-sizing: border-box;
+    float: left;
+}
+.diagonal.part-2 {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    position: relative;
+    float: left;
+    margin-top: 3px;
+}
+#openSidebarMenu:checked ~ .sidebarIconToggle > .horizontal {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    opacity: 0;
+}
+
+#openSidebarMenu:checked ~ .sidebarIconToggle > .diagonal.part-1 {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    transform: rotate(135deg);
+    margin-top: 8px;
+}
+#openSidebarMenu:checked ~ .sidebarIconToggle > .diagonal.part-2 {
+    transition: all 0.3s;
+    box-sizing: border-box;
+    transform: rotate(-135deg);
+    margin-top: -9px;
+}
+
+.main-wrapper{
+  margin:0;
+  transition: margin-left 200ms;
+}
+
+#openSidebarMenu:checked ~ .main-wrapper{
+  margin-left:200px;
+  transition: margin-left 200ms;
+}
+
+.grid-container{
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   width:100%;
+   max-width:1300px;
+}
+
+canvas{
+  width:250px;
+}
+
+.grid{
+  background-color: #222;
+  border: solid 1px #aaa;
+  border-radius: 10px;
+  margin:10px;
+  height:350px;
+}
+
+.freq-selection input{
+	display: none;
+}
+.freq-selection label{
+	display: block;
+	float: left;
+	cursor: pointer;
+	width: 80px;
+	margin: 0;
+	padding: 12px 5px;
+	border-right: 1px solid #abb2b7;
+	background: #bdc3c7;
+	color: #555e64;
+	font-size: 14px;
+	text-align: center;
+	line-height: 1;
+	transition: .2s;
+}
+.freq-selection label:first-of-type{
+	border-radius: 3px 0 0 3px;
+}
+.freq-selection label:last-of-type{
+	border-right: 0px;
+	border-radius: 0 3px 3px 0;
+}
+.freq-selection input[type="radio"]:checked + label {
+	background-color: #a1b91d;
+	color: #fff;
+}
+
 
 h1 {
   padding: 0.2em;
