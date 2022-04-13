@@ -71,8 +71,11 @@ app.get("/ssh_analisis", async(req, res) => {
   res.json(data);
 })
 
-app.get("/a", async(req, res) => {
-  await logdb.create_table();
+app.use((req, res, next) => {
+    res.status(404).send("<h1>404 Page Not Found</h1>");
+});
+
+const update_data = async() => {
   // await logdb.clear_data();
   const files = fs.readdirSync('/var/log').filter(word => word.match(/auth\.log.?/gm));
   console.log(files);
@@ -82,15 +85,13 @@ app.get("/a", async(req, res) => {
   }
   console.log("hoge")
   // await logdb.insert_nginx_data("./tmp/access.log", false);
-});
+}
+setTimeout(update_data, 3000);
+setInterval(update_data, 3600*1000);
 
-app.use((req, res, next) => {
-    res.status(404).send("<h1>404 Page Not Found</h1>");
-});
 
 console.log("Server start on port ", config.port)
 app.listen(config.port, () => {
     console.log('listening......');
 });
-
 

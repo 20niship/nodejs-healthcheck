@@ -85,7 +85,7 @@ class LogManager{
 
   async setup(){
     this.connection = await mysql.createConnection({
-      host: 'localhost',
+      host: 'vm-mysql',
       user: 'docker',
       password:"docker_password",
       database: 'test_database',
@@ -105,6 +105,7 @@ class LogManager{
       }
     });
     console.log("connection : ")
+    await this.create_table();
   }
 
   getConnection(){
