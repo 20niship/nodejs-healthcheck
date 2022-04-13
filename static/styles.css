@@ -188,7 +188,7 @@ main {
    max-width:1300px;
 }
 
-canvas{
+.grid canvas{
   width:250px;
 }
 
@@ -307,10 +307,16 @@ main{
 
 .chart-wrapper h2{
   font-size: 1.3rem;
+  margin-top:10px;
+  margin-bottom: 5px;
 }
 .chart-wrapper canvas{
   width:100%;
-  height:100%;
+}
+
+.chart-wrapper p{
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 .chart-wrapper{
@@ -347,9 +353,6 @@ main{
   .chart-wrapper{
     height : 280px;
   }
-  .chart-wrapper canvas{
-    height:280px;
-  }
 }
 
 @media screen and ( min-width:1600px) {
@@ -361,8 +364,5 @@ main{
   .chart-wrapper{
     height : 240px;
     max-width: 800px;
-  }
-  .chart-wrapper canvas{
-    height:100%;
   }
 }
