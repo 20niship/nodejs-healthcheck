@@ -1,4 +1,4 @@
-const config = {
+export default {
     title:"Healthcheck",
     description:"description",
     url:"localhost",
@@ -31,4 +31,3 @@ const config = {
     }
 }
 
-module.exports = config;

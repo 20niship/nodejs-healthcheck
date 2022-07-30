@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon  --exec ts-node index.ts",
+    "start": "npx ts-node index.ts"
   },
   "repository": {
     "type": "git",
@@ -18,13 +18,19 @@
   },
   "homepage": "https://github.com/20niship/nodejs-healthcheck#readme",
   "dependencies": {
-    "ejs": "^3.1.6",
-    "express": "^4.17.2",
-    "ping": "^0.4.1",
-    "systeminformation": "^5.10.7",
-    "v8": "^0.1.0"
+    "ejs": "latest",
+    "express": "latest",
+    "ping": "latest",
+    "systeminformation": "latest",
+    "v8": "latest"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "nodemon": "latest",
+    "ts-node": "latest",
+    "typescript":"latest",
+    "@types/express": "latest",
+    "@types/ping": "latest",
+    "@types/node": "latest",
+    "@types/systeminformation": "latest"
   }
 }

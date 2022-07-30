@@ -1,7 +1,7 @@
-
+<!DOCTYPE HTML>
 <html>
     <head>
-      <link rel="stylesheet" type="text/css" href="/styles.css" />
+      <style>  <%- include('./styles.css'); %>  </style>
       <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@latest/dist/chartjs-plugin-streaming.min.js"></script> -->
       <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
       <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
@@ -82,6 +82,20 @@
             </div>
           </div>
         <% } %>
+
+          <div class="service-check">
+            <h1>Website Monitoring</h1>
+            <div id="processes-detail" class="service-detail"></div>
+            <div class="table-wrap">
+              <table class="services-table">
+                <thead> <tr><th>PID</th><th>name</th><th>status</th><th>user</th><th>startedAt</th><th>CPU</th><th>Mem</th><th>path</th></tr></thead>
+                  <tbody id="processes">
+                    <tr><td colspan="6">Now loading.......</td></tr>
+                  </tbody>
+              </table>
+            </div>
+          </div>
+
       </main>
     </body>
   </html>

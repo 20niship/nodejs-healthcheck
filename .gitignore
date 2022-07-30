@@ -122,3 +122,5 @@ package-lock.json
 public/
 !public/file/.gitkeep
 
+
+yarn.lock
